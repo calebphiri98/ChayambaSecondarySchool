@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@import "tailwindcss";
+
+@theme {
+    /* This maps your custom theme colors globally for Tailwind v4 */
+    --color-primary: #0F4C81;
+    /* Chayamba Deep Blue */
+    --color-secondary: #1E6F5C;
+    /* Secondary Emerald */
+    --color-accent: #F9A826;
+    /* Alert/Button Gold */
+    --color-neutralBg: #F8FAFC;
+    /* Off-white Background */
+    --color-textDark: #1F2937;
+    /* Charcoal Text */
+
+    /* Custom Font Foundations */
+    --font-headings: "Poppins", sans-serif;
+    --font-sans: "Inter", sans-serif;
+}
