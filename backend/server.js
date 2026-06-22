@@ -218,6 +218,20 @@ app.delete('/api/users/:id', async (req, res) => {
     res.json({ success: true, message: 'Identity credentials purged from core system.' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
-
+app.patch('/api/users/:id/reset-password', async (req, res) => {
+  try {
+    const { password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const [updated] = await sql`
+      UPDATE users SET password = ${hashedPassword}
+      WHERE id = ${req.params.id}
+      RETURNING id, id_number, full_name, role
+    `;
+    if (!updated) return res.status(404).json({ error: 'User not found.' });
+    res.json({ success: true, user: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server executing live inside serverless node port ${PORT}`));
