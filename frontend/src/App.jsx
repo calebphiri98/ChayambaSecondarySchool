@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import HeroSlider from './components/HeroSlider'; 
+import HeroSlider from './components/HeroSlider';
 import PortalGateway from './components/PortalGateway';
 import AdminDashboard from './pages/AdminDashboard';
 import InfoSections from './components/InfoSections';
 import NewsArticlePage from './components/NewsArticlePage';
 import AdmissionsPage from './components/AdmissionsPage';
 import ParentQueryForm from './components/ParentQueryForm';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider } from './context/AuthContext';
 import { ChevronRight, Calendar, User, Target, Eye, Loader2 } from 'lucide-react';
 import API_URL from './config/api';
 
-// fallback standard hero assets if database config handles slides differently
 const DEFAULT_HERO_IMAGES = [
   "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=1200",
   "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=1200",
-  "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=1200"
+  "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=1200",
 ];
 
 function HomePage() {
@@ -28,7 +29,6 @@ function HomePage() {
         setLoading(true);
         const response = await fetch(`${API_URL}/api/news`);
         if (!response.ok) throw new Error('Failed to resolve dynamic news array nodes');
-        
         const data = await response.json();
         setNews(data);
       } catch (err) {
@@ -37,21 +37,18 @@ function HomePage() {
         setLoading(false);
       }
     };
-
     fetchLatestNews();
   }, []);
 
   return (
     <>
-      {/* Handing down slider configurations */}
       <HeroSlider images={DEFAULT_HERO_IMAGES} />
 
-      {/* --- MISSION, VISION, & ABOUT GRID --- */}
       <section id="about" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-5 space-y-4">
             <span className="text-xs uppercase font-bold tracking-widest text-amber-600 block">True Academic Excellence</span>
-            <h4 className="text-2xl md:text-3xl font-black text-[#0c2340]">Work To Earn  (travailler pour gagner)</h4>
+            <h4 className="text-2xl md:text-3xl font-black text-[#0c2340]">Work To Earn (travailler pour gagner)</h4>
             <p className="text-slate-600 text-sm leading-relaxed">
               Chayamba Secondary School provides a robust environment where young minds flourish. We commit ourselves to holistic learning systems that emphasize both intellectual growth and practical problem-solving capabilities.
             </p>
@@ -81,7 +78,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* --- LATEST NEWS & UPDATES --- */}
       <section id="news" className="bg-slate-100 py-16 border-t border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
@@ -111,7 +107,6 @@ function HomePage() {
                       {item.category}
                     </span>
                   </div>
-                  
                   <div className="p-5 flex-1 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center gap-4 text-slate-400 text-xs mb-3">
@@ -122,7 +117,6 @@ function HomePage() {
                         {item.title}
                       </Link>
                     </div>
-                    
                     <div className="mt-5 pt-4 border-t border-slate-100">
                       <Link to={`/news/${item.id}`} className="text-xs font-bold text-amber-600 hover:text-[#0c2340] transition-colors flex items-center gap-1">
                         Read Details <ChevronRight size={14} />
@@ -143,35 +137,46 @@ function HomePage() {
 
 export default function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col justify-between">
-        <Navbar />
-        
-        <main className="grow">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/parent-desk" element={<ParentQueryForm />} />
-            <Route path="/news/:id" element={<NewsArticlePage />} />
-            <Route path="/admissions" element={<AdmissionsPage />} />
-            <Route path="/portal" element={<PortalGateway />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          </Routes>
-        </main>
+    // ✅ AuthProvider wraps everything so all components can access session
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col justify-between">
+          <Navbar />
 
-        {/* --- GLOBAL FOOTER --- */}
-        <footer className="bg-[#08182b] text-white py-12 text-xs">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-6">
-            <p className="text-slate-400">
-              © 2026 Chayamba Secondary School. All rights reserved. Redesigned with premium standards.
-            </p>
-            <div className="flex gap-6 text-slate-300">
-              <a href="#privacy" className="hover:text-white">Privacy Policy</a>
-              <a href="#terms" className="hover:text-white">Terms of Use</a>
-              <Link to="/portal" className="hover:text-white">Portal Support</Link>
+          <main className="grow">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/parent-desk" element={<ParentQueryForm />} />
+              <Route path="/news/:id" element={<NewsArticlePage />} />
+              <Route path="/admissions" element={<AdmissionsPage />} />
+              <Route path="/portal" element={<PortalGateway />} />
+
+              {/* ✅ Protected — only accessible to logged-in staff */}
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </main>
+
+          <footer className="bg-[#08182b] text-white py-12 text-xs">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-6">
+              <p className="text-slate-400">
+                © 2026 Chayamba Secondary School. All rights reserved. Redesigned with premium standards.
+              </p>
+              <div className="flex gap-6 text-slate-300">
+                <a href="#privacy" className="hover:text-white">Privacy Policy</a>
+                <a href="#terms" className="hover:text-white">Terms of Use</a>
+                <Link to="/portal" className="hover:text-white">Portal Support</Link>
+              </div>
             </div>
-          </div>
-        </footer>
-      </div>
-    </Router>
+          </footer>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }

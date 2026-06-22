@@ -1,28 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, User, Eye, EyeOff, ShieldCheck, HelpCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Lock, User, Eye, EyeOff, ShieldCheck, HelpCircle } from 'lucide-react';
 import API_URL from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function PortalGateway() {
   const navigate = useNavigate();
+  const { login, user } = useAuth();
+
   const [activeTab, setActiveTab] = useState('student');
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ idNumber: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // If already logged in, redirect immediately
   useEffect(() => {
     window.scrollTo(0, 0);
+    if (user) {
+      if (user.role === 'staff') navigate('/admin/dashboard', { replace: true });
+      // student portal redirect goes here when it's ready
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
     setErrorMessage('');
-    setSuccessMessage('');
   }, [activeTab]);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
-    setSuccessMessage('');
-    
+
     if (!formData.idNumber || !formData.password) {
       setErrorMessage("Please fill in all security clearance credentials.");
       return;
@@ -36,10 +44,10 @@ export default function PortalGateway() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id_number: formData.idNumber.toUpperCase(), // Match backend column name
+          id_number: formData.idNumber.toUpperCase(),
           password: formData.password,
-          role: selectedRole
-        })
+          role: selectedRole,
+        }),
       });
 
       const data = await response.json();
@@ -48,11 +56,14 @@ export default function PortalGateway() {
         throw new Error(data.error || 'Identity credentials mismatch.');
       }
 
+      // ✅ Save session to context + localStorage
+      login(data.user);
+
       // Redirect based on role
       if (data.user.role === 'staff') {
-        navigate("/admin/dashboard");
+        navigate('/admin/dashboard', { replace: true });
       } else {
-        navigate("/studentportal");
+        navigate('/studentportal', { replace: true });
       }
     } catch (err) {
       setErrorMessage(err.message);
@@ -64,7 +75,7 @@ export default function PortalGateway() {
   return (
     <div className="bg-slate-100 min-h-[85vh] py-12 flex items-center justify-center">
       <div className="max-w-md w-full px-4">
-        
+
         <Link to="/" className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-[#0c2340] mb-6 uppercase tracking-wider transition-colors">
           <ArrowLeft size={14} /> Back to homepage
         </Link>
@@ -104,8 +115,8 @@ export default function PortalGateway() {
               {activeTab === 'student' ? 'Access Academic Records' : 'Secure Staff Terminal'}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-              {activeTab === 'student' 
-                ? 'Enter your MANEB Student Index ID prefix or registered family verification key code number to load termly report charts.' 
+              {activeTab === 'student'
+                ? 'Enter your MANEB Student Index ID prefix or registered family verification key code number to load termly report charts.'
                 : 'Authorized personnel access only. Grade sheets uploads and syllabus tracking inputs require registered central directory tokens.'}
             </p>
           </div>
@@ -124,8 +135,8 @@ export default function PortalGateway() {
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-3.5 text-slate-400"><User size={16} /></span>
-                <input 
-                  type="text" required 
+                <input
+                  type="text" required
                   placeholder={activeTab === 'student' ? 'e.g., CSS/2026/0492' : 'e.g., TS/CH/9942'}
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-3.5 focus:outline-none focus:border-amber-500 focus:bg-white text-slate-800 font-medium transition-all"
                   value={formData.idNumber}
@@ -143,8 +154,8 @@ export default function PortalGateway() {
               </div>
               <div className="relative">
                 <span className="absolute left-3.5 top-3.5 text-slate-400"><Lock size={16} /></span>
-                <input 
-                  type={showPassword ? "text" : "password"} required 
+                <input
+                  type={showPassword ? "text" : "password"} required
                   placeholder="••••••••••••"
                   className="w-full text-xs bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-10 py-3.5 focus:outline-none focus:border-amber-500 focus:bg-white text-slate-800 font-mono tracking-widest transition-all"
                   value={formData.password}
@@ -171,7 +182,7 @@ export default function PortalGateway() {
         </div>
 
         <div className="mt-6 text-center text-[11px] text-slate-500 leading-normal flex items-center justify-center gap-1.5">
-          <HelpCircle size={13} className="text-slate-400" /> 
+          <HelpCircle size={13} className="text-slate-400" />
           Need registration credentials? Contact the Registrar support unit.
         </div>
       </div>
