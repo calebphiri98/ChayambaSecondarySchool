@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Send, HelpCircle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Send, CheckCircle, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import API_URL from '../config/api';
 
 export default function ParentQueryForm() {
   useEffect(() => {
-    window.scrollTo(0, 0); // Window auto-reset position on page launch
+    window.scrollTo(0, 0);
   }, []);
 
   const [formData, setFormData] = useState({
@@ -17,23 +18,48 @@ export default function ParentQueryForm() {
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitting query payload package:", formData);
-    setIsSubmitted(true);
-    setTimeout(() => setIsSubmitted(false), 6000);
+    
+    try {
+      const response = await fetch(`${API_URL}/api/queries`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender: formData.parentName,
+          subject: `${formData.category} | Student: ${formData.studentName || 'N/A'} | Class: ${formData.studentClass}`,
+          message: formData.message,
+          phone: formData.contactMethod, // ← was missing before
+        }),
+      });
+
+      if (!response.ok) throw new Error('Network response was not ok');
+
+      setFormData({
+        parentName: '',
+        studentName: '',
+        studentClass: 'Form 1',
+        contactMethod: '',
+        category: 'General Inquiry',
+        message: ''
+      });
+      
+      setIsSubmitted(true);
+      setTimeout(() => setIsSubmitted(false), 6000);
+    } catch (err) {
+      console.error("Submission error:", err);
+      alert("Transmission failed. Please check your connection.");
+    }
   };
 
   return (
     <div className="bg-slate-50 min-h-[80vh] py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         
-        {/* Navigation Return Button */}
         <Link to="/" className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-[#0c2340] mb-6 uppercase tracking-wider transition-colors">
           <ArrowLeft size={14} /> Back to main home
         </Link>
 
-        {/* Header Block */}
         <div className="text-center mb-10">
           <span className="text-xs uppercase font-bold tracking-widest text-amber-600 block">Parent & Guardian Desk</span>
           <h2 className="text-3xl font-black text-[#0c2340] mt-1">Submit an Official Inquiry</h2>
@@ -42,7 +68,6 @@ export default function ParentQueryForm() {
           </p>
         </div>
 
-        {/* Feedback Success banner */}
         {isSubmitted && (
           <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs md:text-sm flex items-center gap-3">
             <CheckCircle className="text-emerald-500 shrink-0" size={20} />
@@ -52,7 +77,6 @@ export default function ParentQueryForm() {
           </div>
         )}
 
-        {/* Card Form Wrapper */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -78,9 +102,9 @@ export default function ParentQueryForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Registered Student Full Name</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Registered Student Full Name (Optional)</label>
                 <input 
-                  type="text" required placeholder="e.g., Brenda Phiri"
+                  type="text" placeholder="e.g., Brenda Phiri"
                   className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 focus:outline-none focus:border-amber-500 focus:bg-white text-slate-800 transition-all"
                   value={formData.studentName}
                   onChange={(e) => setFormData({...formData, studentName: e.target.value})}
