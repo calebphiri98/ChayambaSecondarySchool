@@ -51,7 +51,7 @@ function HomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-5 space-y-4">
             <span className="text-xs uppercase font-bold tracking-widest text-amber-600 block">True Academic Excellence</span>
-            <h2 className="text-2xl md:text-3xl font-black text-[#0c2340]">Shaping Leaders of Tomorrow</h2>
+            <h4 className="text-2xl md:text-3xl font-black text-[#0c2340]">WORK TO EARN (TRAVAILLER POUR GAGNER)</h4>
             <p className="text-slate-600 text-sm leading-relaxed">
               Chayamba Secondary School provides a robust environment where young minds flourish. We commit ourselves to holistic learning systems that emphasize both intellectual growth and practical problem-solving capabilities.
             </p>
